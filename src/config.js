@@ -1,3 +1,3 @@
 export default {
-  ERC721ContractAddr:'0x580da36625ba6c5c3e40b511e84b276b2a668d04',
+  ERC721ContractAddr:'0xfFd5EDBd8343C3f337467B96e03b76fBA812D652',
 }

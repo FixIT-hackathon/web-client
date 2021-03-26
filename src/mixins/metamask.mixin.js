@@ -1,9 +1,13 @@
 import Web3 from 'web3'
+import config from '@/config'
+
+import { erc721ABI } from '@/const/erc721ABI'
 
 export default {
   data: () => ({
     isMetamaskConnected: false,
     isMetamaskEnabled: false,
+    userAddress: '',
   }),
 
   async created () {
@@ -20,9 +24,11 @@ export default {
 
       window.web3 = new Web3(ethereum)
       this.isMetamaskEnabled = true
+      await this.getAccount()
 
       ethereum.on('accountsChanged', async () => {
         await this.checkIfMetamaskConnected()
+        await this.getAccount()
       })
 
       await this.checkIfMetamaskConnected()
@@ -41,6 +47,7 @@ export default {
         this.isMetamaskProcessing = true
         try {
           await ethereum.request(opts)
+          await this.getAccount()
         } catch (e) {
           console.error(e)
         }
@@ -52,7 +59,7 @@ export default {
 
     async checkIfMetamaskConnected () {
       if (!window.ethereum) return
-      this.isMetamaskConnected = Boolean(await this.getAccount())
+      this.isMetamaskConnected = Boolean(this.userAddress)
     },
 
     async getAccount () {
@@ -62,9 +69,46 @@ export default {
 
       if (!accounts.length) this.isMetamaskConnected = false
 
-      return accounts[0]
+      this.userAddress = accounts[0]
     },
 
-    
+    async getTokenIds (contract) {
+      const tokenIds = []
+
+      const tokenAmount = await this.getTokensAmount(contract)
+      for (let i = 0; i < tokenAmount; i++) {
+        tokenIds.push(this.getTokenIdByIndex(contract, i))
+      }
+      return Promise.all(tokenIds)
+
+
+    },
+
+    async getTokensAmount (contract) {
+      return contract.methods.balanceOf(this.userAddress).call()
+    },
+
+    async getTokenIdByIndex (contract, index) {
+      return contract.methods
+        .tokenOfOwnerByIndex(this.userAddress, index).call()
+    },
+
+    async getTokenURI (contract, tokenId) {
+      return contract.methods.tokenURI(tokenId).call()
+    },
+
+    async getTokenURIs () {
+      if (!this.isMetamaskEnabled) {
+        await this.connectMetamask()
+        return
+      }
+
+      const contract =
+          new window.web3.eth.Contract(erc721ABI, config.ERC721ContractAddr)
+
+      const tokenIds = await this.getTokenIds(contract)
+
+      return Promise.all(tokenIds.map(id => this.getTokenURI(contract, id)))
+    },
   },
 }

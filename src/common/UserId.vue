@@ -1,10 +1,10 @@
 <template>
   <div class="user-id">
     <p
-      v-if="accId"
+      v-if="userAddress"
       class="user-id__title"
     >
-      {{ accId }}
+      {{ userAddress }}
     </p>
     <button
       v-else
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import MetamaskMixin from '@/mixins/metamask-mixin'
+import MetamaskMixin from '@/mixins/metamask.mixin'
 
 export default {
   name: 'user-id',
@@ -27,11 +27,9 @@ export default {
 
   data: () => ({
     isDisabled: false,
-    accId: '',
   }),
 
   async created () {
-    this.accId = await this.getAccount()
   },
 
   methods: {
