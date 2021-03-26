@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "target": "esnext",
+    "allowSyntheticDefaultImports": false,
+    "baseUrl": "./",
+    "paths": {
+      "@validators": ["src/validators.js"],
+      "@scss/*": ["src/scss/*"],
+      "@modules/*": ["src/vue/modules/*"],
+      "@test": ["src/test/index.js"],
+      "@/js/utils": ["src/js/utils/index.js"],
+      "@/js/errors": ["src/js/errors/index.js"],
+      "@/i18n": ["src/i18n/index.js"],
+      "@/vuex": ["src/vuex/index.js"],
+      "@/*": ["src/*"],
+      "@static/*": ["static/*"],
+      "@tokend/js-sdk": ["node_modules/@tokend/js-sdk/lib/index.js"],
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dotenv"
+  ]
+}
