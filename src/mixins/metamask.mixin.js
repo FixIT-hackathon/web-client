@@ -159,9 +159,8 @@ export default {
       const contract =
         new window.web3.eth.Contract(stakingABI, config.stakingAddr)
 
-      // web3.utils.toWei(amount, 'ether')
       await contract.methods
-        .stake('1000000000000000', config.ERC721ContractAddr, id)
+        .stake(web3.utils.toWei(amount, 'ether'), config.ERC721ContractAddr, id)
         .send({from: this.userAddress})
     },
 
