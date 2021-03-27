@@ -2,12 +2,15 @@ import Web3 from 'web3'
 import config from '@/config'
 
 import { erc721ABI } from '@/const/erc721ABI'
+import { erc20ABI } from '@/const/erc20ABI'
+import { stakingABI } from '@/const/stakingABI'
 
 export default {
   data: () => ({
     isMetamaskConnected: false,
     isMetamaskEnabled: false,
     userAddress: '',
+    allowedAmount: '',
   }),
 
   async created () {
@@ -29,6 +32,7 @@ export default {
       ethereum.on('accountsChanged', async () => {
         await this.checkIfMetamaskConnected()
         await this.getAccount()
+        await this.getApprovedAmount()
       })
 
       await this.checkIfMetamaskConnected()
@@ -48,6 +52,7 @@ export default {
         try {
           await ethereum.request(opts)
           await this.getAccount()
+          await this.getApprovedAmount()
         } catch (e) {
           console.error(e)
         }
@@ -75,11 +80,13 @@ export default {
     async getTokenIds (contract) {
       const tokenIds = []
 
+
       const tokenAmount = await this.getTokensAmount(contract)
       for (let i = 0; i < tokenAmount; i++) {
-        tokenIds.push(this.getTokenIdByIndex(contract, i))
+        const tokenId = await this.getTokenIdByIndex(contract, i)
+        tokenIds.push(tokenId)
       }
-      return Promise.all(tokenIds)
+      return (tokenIds)
 
 
     },
@@ -104,11 +111,68 @@ export default {
       }
 
       const contract =
-          new window.web3.eth.Contract(erc721ABI, config.ERC721ContractAddr)
+        new window.web3.eth.Contract(erc721ABI, config.ERC721ContractAddr)
 
       const tokenIds = await this.getTokenIds(contract)
 
-      return Promise.all(tokenIds.map(id => this.getTokenURI(contract, id)))
+      const result = tokenIds.map(async id => {
+        const tokenURI = await this.getTokenURI(contract, id)
+        return {
+          id,
+          tokenURI,
+        }
+      })
+      return result
+    },
+
+    async approveERC20 () {
+      if (!this.isMetamaskEnabled) {
+        await this.connectMetamask()
+        return
+      }
+
+      const amount = web3.utils.toWei('999999999999', 'ether')
+
+      const contract =
+        new window.web3.eth.Contract(erc20ABI, config.ERC20ContractAddr)
+
+      return contract.methods
+        .approve(config.ERC721ContractAddr, amount)
+        .send({ from: this.userAddress })
+    },
+
+    async getApprovedAmount () {
+      const contract =
+        new window.web3.eth.Contract(erc20ABI, config.ERC20ContractAddr)
+
+      this.allowedAmount = await contract.methods
+        .allowance(this.userAddress, config.ERC721ContractAddr)
+        .call()
+    },
+
+    async stake (amount, id) {
+      if (!this.isMetamaskEnabled) {
+        await this.connectMetamask()
+        return
+      }
+
+      const contract =
+        new window.web3.eth.Contract(stakingABI, config.stakingAddr)
+
+      // web3.utils.toWei(amount, 'ether')
+      await contract.methods
+        .stake('1000000000000000', config.ERC721ContractAddr, id)
+        .send({from: this.userAddress})
+    },
+
+    stakeAmount (tokenId) {
+      const contract =
+        new window.web3.eth.Contract(stakingABI, config.stakingAddr)
+
+      return contract.methods
+        .stakeAmountOf(config.ERC721ContractAddr, tokenId)
+        .call()
     },
   },
+
 }
