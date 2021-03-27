@@ -28,6 +28,7 @@ export default {
       window.web3 = new Web3(ethereum)
       this.isMetamaskEnabled = true
       await this.getAccount()
+      await this.getApprovedAmount()
 
       ethereum.on('accountsChanged', async () => {
         await this.checkIfMetamaskConnected()
@@ -80,6 +81,10 @@ export default {
     async getTokenIds (contract) {
       const tokenIds = []
 
+      if (!contract) {
+        contract =
+          new window.web3.eth.Contract(erc721ABI, config.ERC721ContractAddr)
+      }
 
       const tokenAmount = await this.getTokensAmount(contract)
       for (let i = 0; i < tokenAmount; i++) {
@@ -137,7 +142,7 @@ export default {
         new window.web3.eth.Contract(erc20ABI, config.ERC20ContractAddr)
 
       return contract.methods
-        .approve(config.ERC721ContractAddr, amount)
+        .approve(config.stakingAddr, amount)
         .send({ from: this.userAddress })
     },
 
@@ -146,7 +151,7 @@ export default {
         new window.web3.eth.Contract(erc20ABI, config.ERC20ContractAddr)
 
       this.allowedAmount = await contract.methods
-        .allowance(this.userAddress, config.ERC721ContractAddr)
+        .allowance(this.userAddress, config.stakingAddr)
         .call()
     },
 
@@ -164,13 +169,31 @@ export default {
         .send({from: this.userAddress})
     },
 
-    stakeAmount (tokenId) {
+    getStakeAmount (tokenId) {
       const contract =
         new window.web3.eth.Contract(stakingABI, config.stakingAddr)
 
       return contract.methods
-        .stakeAmountOf(config.ERC721ContractAddr, tokenId)
+        .stakeAmountFor(config.ERC721ContractAddr, tokenId)
         .call()
+    },
+
+    getRewardAmount (tokenId) {
+      const contract =
+        new window.web3.eth.Contract(stakingABI, config.stakingAddr)
+
+      return contract.methods
+        .calculateRewardFor(config.ERC721ContractAddr, tokenId)
+        .call()
+    },
+
+    claimReward (tokenId) {
+      const contract =
+        new window.web3.eth.Contract(stakingABI, config.stakingAddr)
+
+      return contract.methods
+        .claimReward(config.ERC721ContractAddr, tokenId)
+        .send({from: this.userAddress})
     },
   },
 

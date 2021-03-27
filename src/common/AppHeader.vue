@@ -1,6 +1,17 @@
 <template>
   <div class="app-header">
-    <user-id />
+    <user-id class="app-header__user-id"/>
+
+    <div class="app-header__nav-bar">
+      <router-link :to="vueRoutes.staking" class="app-header__route">
+        Staking
+      </router-link>
+      <router-link :to="vueRoutes.neStaking" class="app-header__route">
+        Ne Staking
+      </router-link>
+    </div>
+
+    <!-- TODO: handle this piece -->
     <div class="app-header__allowance-button" @click="getApprovedAmount">
       {{ allowanceMessage }}
     </div>
@@ -12,6 +23,8 @@ import UserId from '@/common/UserId'
 
 import MetamaskMixin from '@/mixins/metamask.mixin'
 
+import { vueRoutes } from '@/router/routes'
+
 export default {
   name: 'app-header',
 
@@ -20,6 +33,10 @@ export default {
   },
 
   mixins: [ MetamaskMixin ],
+
+  data: () => ({
+    vueRoutes,
+  }),
 
   computed: {
     allowanceMessage () {
@@ -48,5 +65,25 @@ export default {
 .app-header {
   display: flex;
   justify-content: space-between;
+}
+
+.app-header__nav-bar {
+  display: flex;
+}
+
+.app-header__route {
+  font-size: 4rem;
+
+  &:not(:first-child) {
+    margin-left: 3rem;
+  }
+}
+
+.app-header__user-id {
+  width: 10rem;
+}
+
+.app-header__allowance-button {
+  width: 10rem;
 }
 </style>

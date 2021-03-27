@@ -49,6 +49,10 @@ export default {
 }
 </script>
 
-<style>
-
+<style lang="scss" scoped>
+.user-id__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
 </style>

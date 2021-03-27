@@ -1,35 +1,25 @@
 <template>
   <div class="nft-explorer">
     <div v-if="isLoaded">
-      <div v-if="nonStakedNfts.length" class="nft-explorer__list">
+      <div v-if="stakedNfts.length" class="nft-explorer__list">
         <nft-card
-          v-for="(nft, idx) in nonStakedNfts"
-          class="nft-explorer__list-item"
+          v-for="(nft, idx) in stakedNfts"
           :key="idx"
           :nft="nft"
-          @click="selectNft(nft)"
         />
       </div>
       <div v-else class="nft-explorer__no-data">
-        You have no stakable tokens
+        You have no staked tokens
       </div>
     </div>
     <div v-else class="nft-explorer__loader">
       Loading
     </div>
-    <popup :is-shown.sync="isStakeFormShown">
-      <stake-form
-        slot="content"
-        :nft="selectedNft"
-      />
-    </popup>
   </div>
 </template>
 
 <script>
 import NftCard from '@/common/NftCard'
-import Popup from '@/common/Popup'
-import StakeForm from '@/forms/StakeForm'
 
 import MetamaskMixin from '@/mixins/metamask.mixin'
 
@@ -37,12 +27,10 @@ import { NftRecord } from '@/entities/nft.record'
 import { api } from '@/api'
 
 export default {
-  name: 'nft-explorer',
+  name: 'staked-nft-explorer',
 
   components: {
     NftCard,
-    Popup,
-    StakeForm,
   },
 
   mixins: [ MetamaskMixin ],
@@ -52,19 +40,12 @@ export default {
     isStakeFormShown: false,
     nftURIs: [],
     nfts: [],
-    selectedNft: {},
     stakedNftIds: [],
   }),
 
-  // async created () {
-  //   if (this.userAddress) {
-  //     await this.getNftURIs()
-  //   }
-  // },
-
   computed: {
-    nonStakedNfts () {
-      return this.nfts.filter(i => !this.stakedNftIds.includes(i.id))
+    stakedNfts () {
+      return this.nfts.filter(i => this.stakedNftIds.includes(i.id))
     },
   },
 
@@ -79,7 +60,8 @@ export default {
       this.isLoaded = false
 
       try {
-        await Promise.all([this.getNftURIs(), this.getStakedNftIds()])
+        await this.getNftURIs()
+        await this.getStakedNftIds()
       } catch (e) {
         console.error(e)
       }
@@ -97,23 +79,24 @@ export default {
       this.nfts = this.nfts.map(i => new NftRecord(i))
     },
 
+    // Single responsibility :o
     async getStakedNftIds () {
       const tokenIds = await this.getTokenIds()
       this.stakedNftIds = await this.asyncFilter(tokenIds, async i => {
-        let amount
+        let amount, rewardAmount
         try {
           amount = await this.getStakeAmount(i)
+          rewardAmount = await this.getRewardAmount(i)
+          const nft = this.nfts.find(j => j.id = i)
+            nft?.setStakedAmount(amount)
+            nft?.setRewardAmount(rewardAmount)
+
         } catch (e) {
           console.error(e)
           return false
         }
         return +amount
       })
-    },
-
-    selectNft (nft) {
-      this.selectedNft = nft
-      this.isStakeFormShown = true
     },
 
     async asyncFilter (arr, cb) {
@@ -126,14 +109,6 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.nft-explorer__list {
-  display: flex;
-}
+<style>
 
-.nft-explorer__list-item {
-  &:not(:first-child) {
-    margin-left: 2rem;
-  }
-}
 </style>

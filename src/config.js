@@ -1,5 +1,6 @@
 export default {
   ERC721ContractAddr:'0xfFd5EDBd8343C3f337467B96e03b76fBA812D652',
   ERC20ContractAddr: '0x0f59233e259ca1603abfb90df591e7c2f3e5b9a7',
-  stakingAddr: '0xB2e3baD3C73fe89aFf8eDd0420e5B06F05f8C9bD',
+  stakingAddr: '0x5E4246e7bD3e64bAE6d4b03C248CF8607fB1AE51',
+  verifier712: '0x24afD5C8E18A4eb628b31176eb316e6a88Efc54A',
 }

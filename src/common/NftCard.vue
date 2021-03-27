@@ -7,6 +7,19 @@
       <p class="nft-card__title">
         {{ nft.name }}
       </p>
+      <p v-if="+nft.stakedAmount" class="nft-card__sub-title">
+        {{ `Staked ${nft.stakedAmount} ETH` }}
+      </p>
+      <p v-if="+nft.rewardAmount" class="nft-card__sub-title">
+        {{ `Reward amount ${nft.rewardAmount} ETH` }}
+      </p>
+      <button
+        v-if="+nft.rewardAmount"
+        class="nft-card__claim-btn"
+        @click="claimReward(nft.id)"
+      >
+        Claim
+      </button>
     </div>
   </div>
 </template>
