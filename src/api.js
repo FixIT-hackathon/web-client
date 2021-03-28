@@ -9,17 +9,6 @@ class Api {
   }
 
   async get (endpoint) {
-    // const config = {
-    //   baseURL: this._baseUrl,
-    //   method: 'POST',
-    //   url: endpoint,
-    // }
-
-    // console.log(config)
-
-    // const response = await this._axios(config)
-
-    // return response.data
     return this._call({
       method: 'GET',
       endpoint,

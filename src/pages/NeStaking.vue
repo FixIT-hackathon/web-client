@@ -15,15 +15,42 @@
       <input type="checkbox" v-model="isPlatformFee">
       <button class="ne-staking__test" @click="craftData">TEST</button>
     </div>
-    <div v-if="list.length" class="ne-staking__tx-list">
-      <div class="ne-staking__list-row"/>
-    </div>
+    <template v-if="isLoaded">
+      <div v-if="list.length" class="ne-staking__tx-list">
+        <div
+          v-for="item in list"
+          :key="item.id"
+          class="ne-staking__list-row"
+        >
+          <p>
+            {{ item.sender }}
+          </p>
+          <p>
+            {{ item.receiver }}
+          </p>
+          <p>
+            {{ item.amount }}
+          </p>
+          <p>
+            {{ item.fee }}
+          </p>
+          <button @click="transfer">
+            Transfer
+          </button>
+        </div>
+      </div>
+      <template v-else>
+        List is empty
+      </template>
+    </template>
+    <template v-else>Loading list</template>
   </div>
 </template>
 
 <script>
 import MetamaskMixin from '@/mixins/metamask.mixin'
 import config from '@/config'
+import { OfferRecord } from '@/entities/offer.record'
 import { api } from '@/api'
 export default {
   name: 'ne-staking',
@@ -31,6 +58,7 @@ export default {
   mixins: [ MetamaskMixin ],
 
   data: () => ({
+    isLoaded: false,
     receiverAddr: '',
     amount: '',
     feeAmount: '',
@@ -41,6 +69,13 @@ export default {
 
   async created () {
     api.useBaseUrl(config.baseUrl)
+
+    try {
+      await this.getList()
+    } catch (e) {
+
+    }
+    this.isLoaded = true
   },
 
   methods: {
@@ -50,17 +85,19 @@ export default {
       const endpoint = '/craft'
       const opts = await this.getCraftRequest()
       const data = await api.post(endpoint, opts)
-      const {r, s, v} = await this.getSignature(data)
-      const transferParams = {
-        receiver: opts.receiver,
-        contractAddr: opts.erc20,
+      const {signature} = await this.getSignature(data)
+      const config = this._getOpts(data)
+      const postEndpoint = '/push'
+      const postParams = {
+        data: config,
+        signature_string: signature,
+        sender: this.userAddress,
         amount: opts.amount,
+        receiver: opts.receiver,
         fee: opts.fee,
-        nonce: opts.nonce,
-        r,
-        s,
-        v}
-      await this.transferBySignature(transferParams)
+        erc20: opts.erc20,
+      }
+      await api.post(postEndpoint, postParams)
     },
 
     async getCraftRequest () {
@@ -79,13 +116,46 @@ export default {
       }
     },
 
+    async getList () {
+      const endpoint = '/list'
+
+      const response = await api.get(endpoint)
+
+      this.list = response.map(i => new OfferRecord(i))
+    },
+
     async approve () {
       await this.approveERC20(config.relayerAddr)
+    },
+
+    async transfer (offer) {
+      const transferParams = {
+        receiver: offer.receiver,
+        contractAddr: offer.erc20,
+        amount: offer.amount,
+        fee: offer.fee,
+        nonce: offer.nonce,
+        r: offer.r,
+        s: offer.r,
+        v: offer.r,
+      }
+      await this.transferBySignature(transferParams)
+      this.list = this.list.filter(i => i.id !== offer.id)
     },
   },
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+.ne-staking__perfect-form {
+  margin-top: 2rem;
+}
+.ne-staking__approve {
+  margin-top: 2rem;
+}
 
+.ne-staking__list-row {
+  display: flex;
+  justify-content: space-between;
+}
 </style>

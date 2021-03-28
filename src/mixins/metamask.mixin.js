@@ -207,25 +207,7 @@ export default {
     },
 
     async getSignature (data) {
-      const opts = {
-        types: {
-          EIP712Domain: data.types['EIP712Domain'],
-          [data.primaryType]: data.types[data.primaryType],
-        },
-        domain: {
-          name: data.domain.name,
-          verifyingContract: data.domain.verifyingContract,
-          chainId: data.domain.chainId,
-        },
-        primaryType: data.primaryType,
-        message: {
-          receiver: data.message.receiver,
-          amount: data.message.amount,
-          fee: data.message.fee,
-          erc20: data.message.erc20,
-          nonce: data.message.nonce,
-        },
-      };
+      const opts = this._getOpts(data)
 
       const signer = web3.utils.toChecksumAddress(this.userAddress)
       return new Promise((res, rej) => {
@@ -243,10 +225,32 @@ export default {
             const r = "0x" + signature.substring(0, 64);
             const s = "0x" + signature.substring(64, 128);
             const v = parseInt(signature.substring(128, 130), 16);
-            res({r, s, v})
+            res({r, s, v, signature})
           },
         )},
       )
+    },
+
+    _getOpts (data) {
+      return {
+        types: {
+          EIP712Domain: data.types['EIP712Domain'],
+          [data.primaryType]: data.types[data.primaryType],
+        },
+        domain: {
+          name: data.domain.name,
+          verifyingContract: data.domain.verifyingContract,
+          chainId: data.domain.chainId,
+        },
+        primaryType: data.primaryType,
+        message: {
+          receiver: data.message.receiver,
+          amount: data.message.amount,
+          fee: data.message.fee,
+          erc20: data.message.erc20,
+          nonce: data.message.nonce,
+        },
+      }
     },
 
     async getNonce () {
@@ -261,10 +265,15 @@ export default {
         new window.web3.eth.Contract(relayerABI, config.relayerAddr)
 
       const {receiver, contractAddr, amount, fee, nonce, r, s, v} = params
-
-      return contract.methods
-        .transferFromBySig(receiver, contractAddr, amount, fee, nonce, r, s, v)
-        .send({from: this.userAddress})
+      /* eslint-disable */
+      return new Promise((res, rej) => {
+        contract.methods
+          .transferFromBySig(receiver, contractAddr, amount, fee, nonce, r, s, v)
+          .send({from: this.userAddress})
+          .on('receipt', () => res())
+          .on('error', e => rej(e))
+      })
+      /* eslint-enable */
     },
   },
 
