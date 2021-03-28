@@ -140,7 +140,7 @@ export default {
     },
 
     async transfer (offer) {
-      const nonce = await this.getNonce(offer.receiver)
+      const nonce = await this.getNonce(offer.sender)
       const transferParams = {
         receiver: offer.receiver,
         contractAddr: config.neStakingERC20,

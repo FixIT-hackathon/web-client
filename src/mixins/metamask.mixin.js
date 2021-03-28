@@ -257,7 +257,7 @@ export default {
       const contract =
         new window.web3.eth.Contract(relayerABI, config.relayerAddr)
 
-      return contract.methods.nonces(this.userAddress).call()
+      return contract.methods.nonces(sender).call()
     },
 
     async transferBySignature (params) {
