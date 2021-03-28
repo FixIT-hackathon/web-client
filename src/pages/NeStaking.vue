@@ -34,7 +34,7 @@
           <p>
             {{ item.fee }}
           </p>
-          <button @click="transfer">
+          <button @click="transfer(item)">
             Transfer
           </button>
         </div>
@@ -157,5 +157,9 @@ export default {
 .ne-staking__list-row {
   display: flex;
   justify-content: space-between;
+}
+
+.ne-staking__perfect-form {
+  margin-bottom: 2rem;
 }
 </style>
