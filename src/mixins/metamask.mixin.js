@@ -253,7 +253,7 @@ export default {
       }
     },
 
-    async getNonce () {
+    async getNonce (sender = this.userAddress) {
       const contract =
         new window.web3.eth.Contract(relayerABI, config.relayerAddr)
 

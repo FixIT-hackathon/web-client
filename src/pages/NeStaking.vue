@@ -2,17 +2,25 @@
   <div class="ne-staking">
     <button class="ne-staking__approve" @click="approve">Approve ERC20</button>
     <div class="ne-staking__perfect-form">
-      Receiver address
-      <input type="text" v-model="receiverAddr">
-      Amount
-      <input type="text" v-model="amount">
-      Custom fee
-      <input
-        type="text"
-        v-model="feeAmount"
-        :disabled="isPlatformFee">
-      Use platform fee
-      <input type="checkbox" v-model="isPlatformFee">
+      <div class="ne-staking__form-field">
+        Receiver address
+        <input type="text" v-model="receiverAddr">
+      </div>
+      <div class="ne-staking__form-field">
+        Amount
+        <input type="text" v-model="amount">
+      </div>
+      <div class="ne-staking__form-field">
+        Custom fee
+        <input
+          type="text"
+          v-model="feeAmount"
+          :disabled="isPlatformFee">
+      </div>
+      <div class="ne-staking__form-field">
+        Use platform fee
+        <input type="checkbox" v-model="isPlatformFee">
+      </div>
       <button class="ne-staking__test" @click="craftData">TEST</button>
     </div>
     <template v-if="isLoaded">
@@ -23,16 +31,16 @@
           class="ne-staking__list-row"
         >
           <p>
-            {{ item.sender }}
+            {{ `Sender ${item.sender}` }}
           </p>
           <p>
-            {{ item.receiver }}
+            {{ `Receiver ${item.receiver}` }}
           </p>
           <p>
-            {{ item.amount }}
+            {{ `Amount ${item.amount}` }}
           </p>
           <p>
-            {{ item.fee }}
+            {{ `Fee ${item.fee}` }}
           </p>
           <button @click="transfer(item)">
             Transfer
@@ -85,12 +93,15 @@ export default {
       const endpoint = '/craft'
       const opts = await this.getCraftRequest()
       const data = await api.post(endpoint, opts)
-      const {signature} = await this.getSignature(data)
+      const {r, s, v, signature} = await this.getSignature(data)
       const config = this._getOpts(data)
       const postEndpoint = '/push'
       const postParams = {
         data: config,
         signature_string: signature,
+        r,
+        s,
+        v,
         sender: this.userAddress,
         amount: opts.amount,
         receiver: opts.receiver,
@@ -129,18 +140,23 @@ export default {
     },
 
     async transfer (offer) {
+      const nonce = await this.getNonce(offer.receiver)
       const transferParams = {
         receiver: offer.receiver,
-        contractAddr: offer.erc20,
+        contractAddr: config.neStakingERC20,
         amount: offer.amount,
         fee: offer.fee,
-        nonce: offer.nonce,
+        nonce: nonce,
         r: offer.r,
-        s: offer.r,
-        v: offer.r,
+        s: offer.s,
+        v: offer.v,
       }
-      await this.transferBySignature(transferParams)
-      this.list = this.list.filter(i => i.id !== offer.id)
+      try {
+        await this.transferBySignature(transferParams)
+        this.list = this.list.filter(i => i.id !== offer.id)
+      } catch (e) {
+        console.error(e)
+      }
     },
   },
 }
@@ -161,5 +177,10 @@ export default {
 
 .ne-staking__perfect-form {
   margin-bottom: 2rem;
+  display: flex;
+}
+
+.ne-staking__form-field {
+  margin-right: 2rem;
 }
 </style>
