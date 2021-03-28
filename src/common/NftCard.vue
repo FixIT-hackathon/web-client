@@ -16,7 +16,7 @@
       <button
         v-if="+nft.rewardAmount"
         class="nft-card__claim-btn"
-        @click="claimReward(nft.id)"
+        @click="$emit(EVENTS.claim, nft.id)"
       >
         Claim
       </button>
@@ -29,6 +29,7 @@ import { NftRecord } from '@/entities/nft.record'
 
 const EVENTS = {
   click: 'click',
+  claim: 'claim',
 }
 export default {
   name: 'nft-card',

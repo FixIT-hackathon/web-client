@@ -70,7 +70,9 @@ export default {
 
   watch: {
     userAddress: async function () {
-      await this.init()
+      if(this.userAddress) {
+        await this.init()
+      }
     },
   },
 

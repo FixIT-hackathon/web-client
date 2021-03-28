@@ -4,6 +4,7 @@ import config from '@/config'
 import { erc721ABI } from '@/const/erc721ABI'
 import { erc20ABI } from '@/const/erc20ABI'
 import { stakingABI } from '@/const/stakingABI'
+import { relayerABI } from '@/const/relayerABI'
 
 export default {
   data: () => ({
@@ -14,7 +15,7 @@ export default {
   }),
 
   async created () {
-    await this.enableMetamask()
+    await this.connectMetamask()
   },
 
   methods: {
@@ -27,8 +28,7 @@ export default {
 
       window.web3 = new Web3(ethereum)
       this.isMetamaskEnabled = true
-      await this.getAccount()
-      await this.getApprovedAmount()
+      // TODO: check
 
       ethereum.on('accountsChanged', async () => {
         await this.checkIfMetamaskConnected()
@@ -37,6 +37,11 @@ export default {
       })
 
       await this.checkIfMetamaskConnected()
+
+      if (this.isMetamaskConnected) {
+        await this.getAccount()
+        await this.getApprovedAmount()
+      }
     },
 
     async connectMetamask () {
@@ -130,7 +135,7 @@ export default {
       return result
     },
 
-    async approveERC20 () {
+    async approveERC20 (approveAddr = config.stakingAddr) {
       if (!this.isMetamaskEnabled) {
         await this.connectMetamask()
         return
@@ -141,9 +146,14 @@ export default {
       const contract =
         new window.web3.eth.Contract(erc20ABI, config.ERC20ContractAddr)
 
-      return contract.methods
-        .approve(config.stakingAddr, amount)
-        .send({ from: this.userAddress })
+      return new Promise((res, rej) => {
+        contract.methods
+          .approve(approveAddr, amount)
+          .send({ from: this.userAddress })
+          .on('receipt', async () => { res() })
+          .on('error', err => rej(err))
+      })
+
     },
 
     async getApprovedAmount () {
@@ -193,6 +203,67 @@ export default {
 
       return contract.methods
         .claimReward(config.ERC721ContractAddr, tokenId)
+        .send({from: this.userAddress})
+    },
+
+    async getSignature (data) {
+      const opts = {
+        types: {
+          EIP712Domain: data.types['EIP712Domain'],
+          [data.primaryType]: data.types[data.primaryType],
+        },
+        domain: {
+          name: data.domain.name,
+          verifyingContract: data.domain.verifyingContract,
+          chainId: data.domain.chainId,
+        },
+        primaryType: data.primaryType,
+        message: {
+          receiver: data.message.receiver,
+          amount: data.message.amount,
+          fee: data.message.fee,
+          erc20: data.message.erc20,
+          nonce: data.message.nonce,
+        },
+      };
+
+      const signer = web3.utils.toChecksumAddress(this.userAddress)
+      return new Promise((res, rej) => {
+        web3.currentProvider.sendAsync(
+          {
+            method: "eth_signTypedData_v3",
+            params: [signer, JSON.stringify(opts)],
+            from: signer,
+          },
+          function(err, result) {
+            if (err) {
+              rej(err);
+            }
+            const signature = result.result.substring(2);
+            const r = "0x" + signature.substring(0, 64);
+            const s = "0x" + signature.substring(64, 128);
+            const v = parseInt(signature.substring(128, 130), 16);
+            res({r, s, v})
+          },
+        )},
+      )
+    },
+
+    async getNonce () {
+      const contract =
+        new window.web3.eth.Contract(relayerABI, config.relayerAddr)
+
+      return contract.methods.nonces(this.userAddress).call()
+    },
+
+    async transferBySignature (params) {
+      const contract =
+        new window.web3.eth.Contract(relayerABI, config.relayerAddr)
+
+      const {receiver, contractAddr, amount, fee, nonce, r, s, v} = params
+
+      return contract.methods
+        .transferFromBySig(receiver, contractAddr, amount, fee, nonce, r, s, v)
         .send({from: this.userAddress})
     },
   },

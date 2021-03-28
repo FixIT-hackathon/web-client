@@ -1,6 +1,6 @@
 <template>
   <form class="stake-form" @submit.prevent="submit">
-    <nft-card :nft="nft" />
+    <nft-card class="stake-form__card" :nft="nft" />
     <input
       v-model="amount"
       type="text"
@@ -52,6 +52,9 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+.stake-form__card {
+  width: 100%;
+}
 
 </style>

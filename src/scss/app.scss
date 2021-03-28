@@ -9,4 +9,18 @@ p {
   font-size: 1.6rem;
 }
 
+a {
+  text-decoration: none;
 
+  &:visited {
+    color: black;
+  }
+
+  &:active {
+    text-decoration: underline;
+  }
+}
+
+.router-link-active {
+  text-decoration: underline;
+}

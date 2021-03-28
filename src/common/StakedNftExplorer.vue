@@ -6,6 +6,7 @@
           v-for="(nft, idx) in stakedNfts"
           :key="idx"
           :nft="nft"
+          @claim="claimReward"
         />
       </div>
       <div v-else class="nft-explorer__no-data">
@@ -51,7 +52,9 @@ export default {
 
   watch: {
     userAddress: async function () {
-      await this.init()
+      if(this.userAddress) {
+        await this.init()
+      }
     },
   },
 

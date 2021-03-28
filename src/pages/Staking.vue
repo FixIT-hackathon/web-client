@@ -4,10 +4,10 @@
       Staking
     </h1>
     <div class="staking__nav-bar">
-      <router-link :to="vueRoutes.nftExplorer">
+      <router-link class="staking_nav-link" :to="vueRoutes.nftExplorer">
         Stakable NFTs
       </router-link>
-      <router-link :to="vueRoutes.stakedNftExplorer">
+      <router-link class="staking_nav-link" :to="vueRoutes.stakedNftExplorer">
         Staked NFTs
       </router-link>
     </div>
@@ -17,6 +17,8 @@
 
 <script>
 import { vueRoutes } from '@/router/routes'
+import { api } from '@/api'
+import config from '@/config'
 export default {
   name: 'staking',
 
@@ -26,6 +28,10 @@ export default {
 }
 </script>
 
-<style>
-
+<style lang="scss" scoped>
+.staking_nav-link {
+  &:not(:first-child) {
+    margin-left: 5rem;
+  }
+}
 </style>

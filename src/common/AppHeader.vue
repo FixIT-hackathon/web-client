@@ -12,7 +12,10 @@
     </div>
 
     <!-- TODO: handle this piece -->
-    <div class="app-header__allowance-button" @click="getApprovedAmount">
+    <div
+      class="app-header__allowance-button"
+      @click="getApprovedAmountOrApprove"
+    >
       {{ allowanceMessage }}
     </div>
   </div>
@@ -53,6 +56,7 @@ export default {
         }
 
         await this.approveERC20()
+        await this.getApprovedAmount()
       } catch (e) {
         console.error(e)
       }
